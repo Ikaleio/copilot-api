@@ -202,7 +202,7 @@ function handleAssistantMessage(
         {
           role: "assistant",
           content: mapContent(message.content),
-          reasoning_text: allThinkingContent,
+          reasoning_content: allThinkingContent,
           reasoning_opaque: signature,
           tool_calls: toolUseBlocks.map((toolUse) => ({
             id: toolUse.id,
@@ -218,7 +218,7 @@ function handleAssistantMessage(
         {
           role: "assistant",
           content: mapContent(message.content),
-          reasoning_text: allThinkingContent,
+          reasoning_content: allThinkingContent,
           reasoning_opaque: signature,
         },
       ]
@@ -327,7 +327,7 @@ export function translateToAnthropic(
   for (const choice of response.choices) {
     const textBlocks = getAnthropicTextBlocks(choice.message.content)
     const thinkBlocks = getAnthropicThinkBlocks(
-      choice.message.reasoning_text,
+      choice.message.reasoning_content,
       choice.message.reasoning_opaque,
     )
     const toolUseBlocks = getAnthropicToolUseBlocks(choice.message.tool_calls)

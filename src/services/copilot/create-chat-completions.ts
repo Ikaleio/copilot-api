@@ -43,7 +43,22 @@ export const createChatCompletions = async (
     return events(response)
   }
 
-  return (await response.json()) as ChatCompletionResponse
+  const result = (await response.json()) as ChatCompletionResponse & {
+    choices: Array<{ message: { reasoning_text?: string } }>
+  }
+
+  // Normalize reasoning_text -> reasoning_content for consistency
+  for (const choice of result.choices) {
+    if (choice.message && 'reasoning_text' in choice.message) {
+      const msg = choice.message as typeof choice.message & { reasoning_text?: string }
+      if (msg.reasoning_text !== undefined) {
+        ;(choice.message as any).reasoning_content = msg.reasoning_text
+        delete (choice.message as any).reasoning_text
+      }
+    }
+  }
+
+  return result as ChatCompletionResponse
 }
 
 // Streaming types
@@ -81,7 +96,7 @@ export interface Delta {
       arguments?: string
     }
   }>
-  reasoning_text?: string | null
+  reasoning_content?: string | null
   reasoning_opaque?: string | null
 }
 
@@ -114,7 +129,7 @@ export interface ChatCompletionResponse {
 interface ResponseMessage {
   role: "assistant"
   content: string | null
-  reasoning_text?: string | null
+  reasoning_content?: string | null
   reasoning_opaque?: string | null
   tool_calls?: Array<ToolCall>
 }
@@ -153,6 +168,7 @@ export interface ChatCompletionsPayload {
     | null
   user?: string | null
   thinking_budget?: number
+  reasoning_effort?: "none" | "minimal" | "low" | "medium" | "high" | "xhigh"
 }
 
 export interface Tool {
@@ -171,7 +187,7 @@ export interface Message {
   name?: string
   tool_calls?: Array<ToolCall>
   tool_call_id?: string
-  reasoning_text?: string | null
+  reasoning_content?: string | null
   reasoning_opaque?: string | null
 }
 

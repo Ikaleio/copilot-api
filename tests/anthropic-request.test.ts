@@ -151,7 +151,7 @@ describe("Anthropic to OpenAI translation logic", () => {
     const assistantMessage = openAIPayload.messages.find(
       (m) => m.role === "assistant",
     )
-    expect(assistantMessage?.reasoning_text).toContain(
+    expect(assistantMessage?.reasoning_content).toContain(
       "Let me think about this simple math problem...",
     )
     expect(assistantMessage?.content).toContain("2+2 equals 4.")
@@ -190,7 +190,7 @@ describe("Anthropic to OpenAI translation logic", () => {
     const assistantMessage = openAIPayload.messages.find(
       (m) => m.role === "assistant",
     )
-    expect(assistantMessage?.reasoning_text).toContain(
+    expect(assistantMessage?.reasoning_content).toContain(
       "I need to call the weather API",
     )
     expect(assistantMessage?.content).toContain(

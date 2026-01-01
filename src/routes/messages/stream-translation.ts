@@ -316,7 +316,7 @@ function handleThinkingText(
   state: AnthropicStreamState,
   events: Array<AnthropicStreamEventData>,
 ) {
-  if (delta.reasoning_text && delta.reasoning_text.length > 0) {
+  if (delta.reasoning_content && delta.reasoning_content.length > 0) {
     if (!state.thinkingBlockOpen) {
       events.push({
         type: "content_block_start",
@@ -334,7 +334,7 @@ function handleThinkingText(
       index: state.contentBlockIndex,
       delta: {
         type: "thinking_delta",
-        thinking: delta.reasoning_text,
+        thinking: delta.reasoning_content,
       },
     })
   }
