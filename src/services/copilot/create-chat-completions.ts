@@ -49,12 +49,13 @@ export const createChatCompletions = async (
 
   // Normalize reasoning_text -> reasoning_content for consistency
   for (const choice of result.choices) {
-    if (choice.message && 'reasoning_text' in choice.message) {
-      const msg = choice.message as typeof choice.message & { reasoning_text?: string }
-      if (msg.reasoning_text !== undefined) {
-        ;(choice.message as any).reasoning_content = msg.reasoning_text
-        delete (choice.message as any).reasoning_text
-      }
+    const msg = choice.message as typeof choice.message & {
+      reasoning_text?: string
+      reasoning_content?: string
+    }
+    if ("reasoning_text" in msg && msg.reasoning_text !== undefined) {
+      msg.reasoning_content = msg.reasoning_text
+      delete msg.reasoning_text
     }
   }
 
