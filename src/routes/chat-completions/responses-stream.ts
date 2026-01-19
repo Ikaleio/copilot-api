@@ -6,6 +6,7 @@ interface StreamState {
   responseId: string
   model: string
   toolCalls: Array<ToolCallState>
+  roleEmitted: boolean
 }
 
 interface ToolCallState {
@@ -44,9 +45,17 @@ function createChunk(
   }
 }
 
+async function emitRoleIfNeeded(stream: SSEStreamingApi, state: StreamState) {
+  if (state.roleEmitted) return
+  state.roleEmitted = true
+  // Include content: "" for OpenWebUI compatibility
+  const chunk = createChunk(state, { role: "assistant", content: "" })
+  await stream.writeSSE({ data: JSON.stringify(chunk) })
+}
+
 function handleCreatedEvent(data: Record<string, unknown>, state: StreamState) {
   if (data.id) state.responseId = data.id as string
-  if (data.model) state.model = data.model as string
+  if (!state.model && data.model) state.model = data.model as string
 }
 
 async function handleReasoningDelta(
@@ -55,6 +64,7 @@ async function handleReasoningDelta(
   state: StreamState,
 ) {
   const delta = (data.delta as string) || ""
+  await emitRoleIfNeeded(stream, state)
   const chunk = createChunk(state, { reasoning_content: delta })
   await stream.writeSSE({ data: JSON.stringify(chunk) })
 }
@@ -65,6 +75,7 @@ async function handleOutputTextDelta(
   state: StreamState,
 ) {
   const delta = (data.delta as string) || ""
+  await emitRoleIfNeeded(stream, state)
   const chunk = createChunk(state, { content: delta })
   await stream.writeSSE({ data: JSON.stringify(chunk) })
 }
@@ -89,6 +100,7 @@ async function handleFunctionCallDelta(
   toolCall.function.arguments =
     (toolCall.function.arguments || "") + ((data.delta as string) || "")
 
+  await emitRoleIfNeeded(stream, state)
   const chunk = createChunk(state, {
     tool_calls: [
       {
@@ -118,6 +130,7 @@ async function handleFunctionCallCreated(
     },
   })
 
+  await emitRoleIfNeeded(stream, state)
   const chunk = createChunk(state, {
     tool_calls: [
       {
@@ -185,6 +198,7 @@ export async function processResponseStream(
     responseId: "",
     model,
     toolCalls: [],
+    roleEmitted: false,
   }
 
   for await (const event of events) {
